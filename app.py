@@ -535,7 +535,8 @@ def admin_dashboard():
             'revenue': sum(order['total_amount'] for order in orders_response.data) if orders_response.data else 0
         }
 
-        recent_orders = orders_response.data[:5] if orders_response.data else []
+        recent_orders = orders_response.data[:5] if orders_response.data else [
+        ]
 
         return render_template('admin/dashboard.html', stats=stats, recent_orders=recent_orders)
     except Exception as e:
@@ -753,7 +754,8 @@ def admin_edit_product(product_id):
             }
 
             # ✅ FIXED: Added debug logging for the update
-            print(f"DEBUG: Updating product {product_id} with data: {product_data}")
+            print(
+                f"DEBUG: Updating product {product_id} with data: {product_data}")
 
             response = get_supabase().table('products').update(
                 product_data).eq('id', product_id).execute()
