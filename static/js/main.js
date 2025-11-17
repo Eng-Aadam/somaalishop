@@ -1,4 +1,4 @@
-// static/js/main.js
+// static/js/main.js - FIXED VERSION
 
 // Main JavaScript for SomaliShop E-commerce
 
@@ -14,6 +14,7 @@ function initializeApp() {
     initializeImageLazyLoading();
     initializeSmoothScrolling();
     initializeToastNotifications();
+    initializeWhatsAppLinks();
 }
 
 // Mobile Menu Functionality
@@ -26,14 +27,12 @@ function initializeMobileMenu() {
     if (mobileMenuBtn && mobileMenu) {
         mobileMenuBtn.addEventListener('click', function() {
             mobileMenu.classList.toggle('hidden');
-            mobileMenu.classList.toggle('slide-in');
         });
     }
 
     if (adminMobileMenuBtn && adminMobileMenu) {
         adminMobileMenuBtn.addEventListener('click', function() {
             adminMobileMenu.classList.toggle('hidden');
-            adminMobileMenu.classList.toggle('slide-in');
         });
     }
 
@@ -48,9 +47,17 @@ function initializeMobileMenu() {
     });
 }
 
+// WhatsApp Links - FIXED: Ensure all WhatsApp links open in new tab
+function initializeWhatsAppLinks() {
+    const whatsappLinks = document.querySelectorAll('a[href*="wa.me"], a[href*="whatsapp.com"], a[href*="api.whatsapp.com"]');
+    whatsappLinks.forEach(link => {
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener noreferrer');
+    });
+}
+
 // Cart Functionality
 function initializeCartFunctionality() {
-    // Cart count update
     updateCartCountDisplay();
     
     // Cart item quantity controls
@@ -69,7 +76,7 @@ function updateCartCountDisplay() {
     
     cartCountElements.forEach(element => {
         if (cart.length > 0) {
-            element.textContent = cart.length;
+            element.textContent = cart.reduce((total, item) => total + item.quantity, 0);
             element.classList.remove('hidden');
         } else {
             element.classList.add('hidden');
@@ -89,6 +96,7 @@ function getCartFromStorage() {
 function saveCartToStorage(cart) {
     try {
         localStorage.setItem('somaliShopCart', JSON.stringify(cart));
+        updateCartCountDisplay();
     } catch (error) {
         console.error('Error saving cart to storage:', error);
     }
@@ -109,7 +117,6 @@ function updateCartQuantity(productId, action) {
         }
         
         saveCartToStorage(cart);
-        updateCartCountDisplay();
         showToast('Cart updated successfully', 'success');
         
         // Update cart page if we're on it
@@ -157,14 +164,6 @@ function initializeFormValidations() {
             validatePhoneNumber(this);
         });
     });
-    
-    // Password strength
-    const passwordInputs = document.querySelectorAll('input[type="password"]');
-    passwordInputs.forEach(input => {
-        input.addEventListener('input', function() {
-            checkPasswordStrength(this);
-        });
-    });
 }
 
 function validateEmail(input) {
@@ -182,7 +181,6 @@ function validateEmail(input) {
 
 function validatePhoneNumber(input) {
     const phone = input.value;
-    // Basic international phone validation
     const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/;
     
     if (phone && !phoneRegex.test(phone)) {
@@ -192,40 +190,6 @@ function validatePhoneNumber(input) {
         clearInputError(input);
         return true;
     }
-}
-
-function checkPasswordStrength(input) {
-    const password = input.value;
-    const strengthIndicator = input.parentNode.querySelector('.password-strength');
-    
-    if (!strengthIndicator) return;
-    
-    let strength = 0;
-    let feedback = '';
-    
-    if (password.length >= 8) strength++;
-    if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
-    if (password.match(/\d/)) strength++;
-    if (password.match(/[^a-zA-Z\d]/)) strength++;
-    
-    switch (strength) {
-        case 0:
-        case 1:
-            feedback = 'Weak';
-            strengthIndicator.className = 'password-strength text-red-600 text-sm';
-            break;
-        case 2:
-        case 3:
-            feedback = 'Medium';
-            strengthIndicator.className = 'password-strength text-yellow-600 text-sm';
-            break;
-        case 4:
-            feedback = 'Strong';
-            strengthIndicator.className = 'password-strength text-green-600 text-sm';
-            break;
-    }
-    
-    strengthIndicator.textContent = feedback;
 }
 
 function showInputError(input, message) {
@@ -311,22 +275,23 @@ function showToast(message, type = 'info', duration = 3000) {
         info: 'bg-blue-500 text-white'
     };
     
-    toast.className = `p-4 rounded-lg shadow-lg transform transition-transform duration-300 ${typeClasses[type] || typeClasses.info}`;
+    toast.className = `p-4 rounded-lg shadow-lg transform transition-transform duration-300 translate-x-full ${typeClasses[type] || typeClasses.info}`;
     toast.textContent = message;
     
     toastContainer.appendChild(toast);
     
     // Animate in
     setTimeout(() => {
+        toast.classList.remove('translate-x-full');
         toast.classList.add('translate-x-0');
     }, 10);
     
     // Remove after duration
     setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-x-full');
+        toast.classList.remove('translate-x-0');
+        toast.classList.add('translate-x-full');
         setTimeout(() => {
             toast.remove();
-            // Remove container if empty
             if (toastContainer.children.length === 0) {
                 toastContainer.remove();
             }
@@ -334,118 +299,104 @@ function showToast(message, type = 'info', duration = 3000) {
     }, duration);
 }
 
-// API Helper Functions
-async function apiCall(endpoint, options = {}) {
-    const defaultOptions = {
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        credentials: 'same-origin'
-    };
+// Product Functions
+function addToCart(productId, quantity = 1) {
+    const formData = new FormData();
+    formData.append('product_id', productId);
+    formData.append('quantity', quantity);
     
-    const config = { ...defaultOptions, ...options };
-    
-    try {
-        const response = await fetch(endpoint, config);
-        const data = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(data.message || 'API request failed');
+    fetch('/add-to-cart', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Product added to cart!', 'success');
+            updateCartCountDisplay();
+        } else {
+            showToast(data.message, 'error');
         }
-        
-        return data;
-    } catch (error) {
-        console.error('API call failed:', error);
-        showToast(error.message || 'Request failed', 'error');
-        throw error;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Error adding product to cart', 'error');
+    });
+}
+
+function updateCartCountDisplay() {
+    const cartCountElements = document.querySelectorAll('.cart-count');
+    const cart = JSON.parse(localStorage.getItem('somaliShopCart')) || [];
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    
+    cartCountElements.forEach(element => {
+        if (totalItems > 0) {
+            element.textContent = totalItems;
+            element.classList.remove('hidden');
+        } else {
+            element.classList.add('hidden');
+        }
+    });
+}
+
+// Admin Functions
+function deleteProduct(productId, productName) {
+    if (confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)) {
+        fetch('/admin/delete-product/' + productId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Product deleted successfully!', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error deleting product', 'error');
+        });
     }
 }
 
-// Product Search with Debounce
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-// Currency Formatter
-function formatCurrency(amount) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD'
-    }).format(amount);
-}
-
-// Local Storage Helpers
-class StorageHelper {
-    static set(key, value) {
-        try {
-            localStorage.setItem(key, JSON.stringify(value));
-            return true;
-        } catch (error) {
-            console.error('Storage set failed:', error);
-            return false;
-        }
-    }
-    
-    static get(key, defaultValue = null) {
-        try {
-            const item = localStorage.getItem(key);
-            return item ? JSON.parse(item) : defaultValue;
-        } catch (error) {
-            console.error('Storage get failed:', error);
-            return defaultValue;
-        }
-    }
-    
-    static remove(key) {
-        try {
-            localStorage.removeItem(key);
-            return true;
-        } catch (error) {
-            console.error('Storage remove failed:', error);
-            return false;
-        }
+function deleteUser(userId, userEmail) {
+    if (confirm(`Are you sure you want to delete user "${userEmail}"? This action cannot be undone.`)) {
+        fetch('/admin/delete-user/' + userId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('User deleted successfully!', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error deleting user', 'error');
+        });
     }
 }
 
 // Export functions for global use
 window.showToast = showToast;
-window.formatCurrency = formatCurrency;
-window.apiCall = apiCall;
-window.StorageHelper = StorageHelper;
+window.addToCart = addToCart;
+window.deleteProduct = deleteProduct;
+window.deleteUser = deleteUser;
 
-// Error boundary for the entire app
-window.addEventListener('error', function(event) {
-    console.error('Global error caught:', event.error);
-    showToast('Something went wrong. Please try again.', 'error');
-});
-
-// Online/Offline detection
-window.addEventListener('online', function() {
-    showToast('Connection restored', 'success');
-});
-
-window.addEventListener('offline', function() {
-    showToast('You are offline. Some features may not work.', 'warning');
-});
-
-// Performance monitoring
-if ('performance' in window) {
-    window.addEventListener('load', function() {
-        setTimeout(() => {
-            const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
-            console.log(`Page loaded in ${loadTime}ms`);
-            
-            if (loadTime > 3000) {
-                console.warn('Page load time is slow:', loadTime);
-            }
-        }, 0);
-    });
-}
+// Initialize WhatsApp links on page load
+initializeWhatsAppLinks();

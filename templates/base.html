@@ -11,6 +11,17 @@
     
     <!-- CUSTOM CSS LAST - TO OVERRIDE TAILWIND -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    
+    <style>
+        /* EMERGENCY INLINE CSS - Ensures styles work even if external CSS fails */
+        body { background: #f9fafb !important; font-family: 'Inter', sans-serif; }
+        nav { background: white !important; position: sticky !important; top: 0 !important; z-index: 50 !important; }
+        .text-blue-600 { color: #2563eb !important; }
+        .bg-blue-600 { background: #2563eb !important; }
+        .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important; }
+        .transition { transition: all 0.3s ease !important; }
+        .hover\\:bg-blue-700:hover { background-color: #1d4ed8 !important; }
+    </style>
 </head>
 
 <body class="bg-gray-50">
@@ -31,7 +42,7 @@
                         <i class="fas fa-shopping-cart mr-1"></i>
                         Cart 
                         {% if session.get('cart') %}
-                        <span class="ml-1 bg-blue-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
+                        <span class="ml-1 bg-blue-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center cart-count">
                             {{ session.cart|length }}
                         </span>
                         {% endif %}
@@ -47,7 +58,7 @@
                                 {{ get_current_user().full_name or get_current_user().email }}
                                 <i class="fas fa-chevron-down ml-1 text-xs"></i>
                             </button>
-                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
                                 <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-sign-out-alt mr-2"></i>Logout
                                 </a>
@@ -118,11 +129,11 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Floating WhatsApp Button -->
+    <!-- Floating WhatsApp Button - FIXED: Opens in new tab -->
     <div class="fixed bottom-6 right-6 z-40">
         <a href="https://wa.me/2520907251291?text=Hello%20SomaliShop%2C%20I%20have%20a%20question%20about%20your%20products" 
-           target="_blank"
-           class="bg-green-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition transform hover:scale-110">
+           target="_blank" rel="noopener noreferrer"
+           class="bg-green-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition transform hover:scale-110 whatsapp-float">
             <i class="fab fa-whatsapp text-2xl"></i>
         </a>
     </div>
@@ -190,18 +201,5 @@
     <!-- Scripts -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block scripts %}{% endblock %}
-
-    <head>
-    <!-- ... existing code ... -->
-    
-    <!-- 🚨 EMERGENCY INLINE CSS -->
-    <style>
-        /* FORCE STYLES - This will definitely work */
-        body { background: #f9fafb !important; }
-        nav { background: white !important; position: sticky !important; top: 0 !important; }
-        .text-blue-600 { color: #2563eb !important; }
-        .bg-blue-600 { background: #2563eb !important; }
-    </style>
-</head>
 </body>
 </html>
