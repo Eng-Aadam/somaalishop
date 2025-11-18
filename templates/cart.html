@@ -1,134 +1,156 @@
-<!-- templates/checkout.html -->
+<!-- templates/cart.html -->
 {% extends "base.html" %}
 
-{% block title %}Checkout - SomaliShop{% endblock %}
+{% block title %}Cart - SomaliShop{% endblock %}
 
 {% block content %}
-
-
 <div class="max-w-4xl mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Shopping Cart</h1>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Checkout Form -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold mb-6">Shipping Information</h2>
+    {% if cart_items %}
+    <div class="bg-white rounded-lg shadow-md">
+        {% for item in cart_items %}
+        <div class="flex items-center justify-between p-6 border-b border-gray-200">
+            <div class="flex items-center space-x-4">
+                <img src="{{ item.image_url or '/static/images/placeholder.jpg' }}" 
+                     alt="{{ item.name }}" 
+                     class="w-20 h-20 object-cover rounded">
+                <div>
+                    <h3 class="font-semibold text-lg">{{ item.name }}</h3>
+                    <p class="text-gray-600">{{ format_currency(item.price) }}</p>
+                </div>
+            </div>
             
-            <form id="checkoutForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Full Name</label>
-                    <input type="text" name="full_name" required 
-                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <button class="decrease-btn w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
+                            data-product-id="{{ item.product_id }}">
+                        <i class="fas fa-minus text-sm"></i>
+                    </button>
+                    <span class="quantity-display font-semibold" data-product-id="{{ item.product_id }}">{{ item.quantity }}</span>
+                    <button class="increase-btn w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300"
+                            data-product-id="{{ item.product_id }}">
+                        <i class="fas fa-plus text-sm"></i>
+                    </button>
                 </div>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                    <input type="tel" name="phone_number" required 
-                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                           placeholder="+252">
-                </div>
+                <p class="font-semibold text-lg">{{ format_currency(item.price * item.quantity) }}</p>
                 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Address</label>
-                    <textarea name="address" rows="3" required 
-                              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">City</label>
-                    <input type="text" name="city" required 
-                           class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                </div>
-            </form>
+                <button class="remove-btn text-red-600 hover:text-red-800"
+                        data-product-id="{{ item.product_id }}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
         </div>
-
-        <!-- Order Summary -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h2 class="text-xl font-semibold mb-6">Order Summary</h2>
-            
-            <div class="space-y-4 mb-6">
-                {% for item in cart_items %}
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        {% if item.image_url %}
-                        <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-12 h-12 object-cover rounded">
-                        {% else %}
-                        <div class="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                            <i class="fas fa-image text-gray-400"></i>
-                        </div>
-                        {% endif %}
-                        <div>
-                            <p class="font-medium">{{ item.name }}</p>
-                            <p class="text-sm text-gray-500">Qty: {{ item.quantity }}</p>
-                        </div>
-                    </div>
-                    <p class="font-semibold">{{ format_currency(item.price * item.quantity) }}</p>
-                </div>
-                {% endfor %}
+        {% endfor %}
+        
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-xl font-semibold">Total:</span>
+                <span class="text-xl font-bold text-green-600">{{ format_currency(total) }}</span>
             </div>
             
-            <div class="border-t pt-4 space-y-2">
-                <div class="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>{{ format_currency(total) }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span>Shipping</span>
-                    <span class="text-green-600">Free</span>
-                </div>
-                <div class="flex justify-between text-lg font-semibold border-t pt-2">
-                    <span>Total</span>
-                    <span class="text-blue-600">{{ format_currency(total) }}</span>
-                </div>
+            <div class="flex space-x-4">
+                <a href="{{ url_for('products') }}" 
+                   class="flex-1 bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-700 text-center transition">
+                    Continue Shopping
+                </a>
+                <a href="{{ url_for('checkout') }}" 
+                   class="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 text-center transition font-semibold">
+                    Proceed to Checkout - {{ format_currency(total) }}
+                </a>
             </div>
-            
-            <button onclick="processPayment()" 
-                    class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition font-semibold mt-6">
-                Complete Order
-            </button>
         </div>
     </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <i class="fas fa-shopping-cart text-6xl text-gray-300 mb-4"></i>
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">Your cart is empty</h2>
+        <p class="text-gray-600 mb-6">Start shopping to add items to your cart</p>
+        <a href="{{ url_for('products') }}" 
+           class="bg-green-600 text-white py-3 px-8 rounded-lg hover:bg-green-700 transition font-semibold">
+            Browse Products
+        </a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-function processPayment() {
-    const formData = new FormData(document.getElementById('checkoutForm'));
-    
-    fetch('{{ url_for("process_payment") }}', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification('Order placed successfully!', 'success');
-            setTimeout(() => {
-                window.location.href = '/order-success/' + data.order_id;
-            }, 2000);
-        } else {
-            showNotification(data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Error processing payment', 'error');
-    });
-}
+    document.addEventListener('DOMContentLoaded', function() {
+        // Decrease quantity
+        document.querySelectorAll('.decrease-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                const quantityDisplay = document.querySelector('.quantity-display[data-product-id="' + productId + '"]');
+                const currentQuantity = parseInt(quantityDisplay.textContent);
+                updateQuantity(productId, currentQuantity - 1);
+            });
+        });
 
-function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-transform duration-300 ${
-        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-    }`;
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
+        // Increase quantity
+        document.querySelectorAll('.increase-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                const quantityDisplay = document.querySelector('.quantity-display[data-product-id="' + productId + '"]');
+                const currentQuantity = parseInt(quantityDisplay.textContent);
+                updateQuantity(productId, currentQuantity + 1);
+            });
+        });
+
+        // Remove item
+        document.querySelectorAll('.remove-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                removeItem(productId);
+            });
+        });
+
+        async function updateQuantity(productId, newQuantity) {
+            if (newQuantity < 1) {
+                removeItem(productId);
+                return;
+            }
+            
+            try {
+                const response = await fetch('/update-cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'product_id=' + productId + '&quantity=' + newQuantity
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error updating cart:', error);
+            }
+        }
+
+        async function removeItem(productId) {
+            try {
+                const response = await fetch('/update-cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'product_id=' + productId + '&quantity=0'
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error removing item:', error);
+            }
+        }
+    });
 </script>
 {% endblock %}

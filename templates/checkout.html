@@ -1,527 +1,539 @@
+<!-- templates/checkout.html -->
 {% extends "base.html" %}
 
 {% block title %}Checkout - SomaliShop{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
+<div class="max-w-6xl mx-auto py-8 px-4">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">Checkout</h1>
+    <p class="text-gray-600 mb-8">Complete your purchase with mobile money payment</p>
 
-    {% if not get_current_user() %}
-    <!-- Login Required -->
-    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
-        <div class="flex items-center">
-            <i class="fas fa-exclamation-triangle text-yellow-500 text-xl mr-3"></i>
-            <div>
-                <h3 class="text-lg font-semibold text-yellow-800">Login Required</h3>
-                <p class="text-yellow-700">Please login or create an account to complete your purchase.</p>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Order Summary -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-shopping-bag mr-2 text-green-600"></i>
+                Order Summary
+            </h2>
+            
+            <div id="cart-items" class="space-y-4">
+                {% for item in cart_items %}
+                <div class="flex items-center py-3 border-b border-gray-100">
+                    <img src="{{ item.image_url or '/static/images/placeholder.jpg' }}" 
+                         alt="{{ item.name }}" 
+                         class="w-16 h-16 object-cover rounded-lg">
+                    <div class="ml-4 flex-1">
+                        <h3 class="font-medium text-gray-800">{{ item.name }}</h3>
+                        <p class="text-gray-600 text-sm">Quantity: {{ item.quantity }}</p>
+                        <p class="text-green-600 font-semibold">{{ format_currency(item.price) }} each</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-semibold text-gray-800">{{ format_currency(item.price * item.quantity) }}</p>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
-        </div>{% extends "base.html" %}
 
-{% block title %}Checkout - SomaliShop{% endblock %}
+            <div class="mt-6 pt-4 border-t border-gray-200">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-gray-600">Subtotal</span>
+                    <span id="subtotal" class="font-medium">{{ format_currency(total) }}</span>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-gray-600">Shipping</span>
+                    <span class="text-green-600 font-semibold">Free</span>
+                </div>
+                <div class="flex justify-between items-center text-lg font-bold mt-4 pt-4 border-t border-gray-200">
+                    <span class="text-gray-800">Total Amount</span>
+                    <span id="order-total" class="text-green-600">{{ format_currency(total) }}</span>
+                </div>
+            </div>
+        </div>
 
-{% block content %}
-<div class="max-w-6xl mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Complete Your Order</h1>
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Checkout Form -->
-        <div class="lg:col-span-2">
+        <!-- Payment Form -->
+        <div class="space-y-6">
+            <!-- Customer Information -->
             <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold mb-6 border-b pb-4">Payment Information</h2>
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-user mr-2 text-blue-600"></i>
+                    Customer Information
+                </h2>
                 
-                <form id="checkoutForm" class="space-y-6">
-                    <!-- Personal Information -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                            <input type="text" name="full_name" required 
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                   placeholder="Abdullahi Mohamed">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                            <input type="tel" name="phone_number" required 
-                                   class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                   placeholder="+252 61 123 4567">
-                        </div>
-                    </div>
-
-                    <!-- Payment Method -->
+                <form id="customer-form" class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-4">Payment Method</label>
-                        <div class="space-y-3">
-                            <div class="flex items-center p-4 border border-gray-300 rounded-lg hover:border-blue-500 cursor-pointer transition">
-                                <input type="radio" name="payment_method" value="evc" class="h-4 w-4 text-blue-600 focus:ring-blue-500" checked>
-                                <div class="ml-3 flex items-center">
-                                    <i class="fas fa-mobile-alt text-green-600 text-xl mr-3"></i>
-                                    <div>
-                                        <span class="font-medium">EVC Plus</span>
-                                        <p class="text-sm text-gray-500">Pay with your EVC mobile number</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="flex items-center p-4 border border-gray-300 rounded-lg hover:border-blue-500 cursor-pointer transition">
-                                <input type="radio" name="payment_method" value="zaad" class="h-4 w-4 text-blue-600 focus:ring-blue-500">
-                                <div class="ml-3 flex items-center">
-                                    <i class="fas fa-wallet text-blue-600 text-xl mr-3"></i>
-                                    <div>
-                                        <span class="font-medium">Zaad Service</span>
-                                        <p class="text-sm text-gray-500">Pay with your Zaad account</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <label for="full_name" class="block text-sm font-medium text-gray-700 mb-1">
+                            Full Name *
+                        </label>
+                        <input type="text" id="full_name" name="full_name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                               placeholder="Enter your full name">
                     </div>
 
-                    <!-- Payment Details -->
-                    <div id="evcDetails" class="payment-details">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">EVC Number</label>
-                                <input type="tel" name="evc_number" 
-                                       class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                       placeholder="+252 61 123 4567">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">PIN Code</label>
-                                <input type="password" name="pin" 
-                                       class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                       placeholder="••••" maxlength="4">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="zaadDetails" class="payment-details hidden">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Zaad Number</label>
-                                <input type="tel" name="zaad_number" 
-                                       class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                       placeholder="+252 63 123 4567">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">PIN Code</label>
-                                <input type="password" name="zaad_pin" 
-                                       class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                       placeholder="••••" maxlength="4">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Shipping Address -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Shipping Address</label>
-                        <textarea name="address" rows="3" required 
-                                  class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                        <label for="phone_number" class="block text-sm font-medium text-gray-700 mb-1">
+                            Phone Number *
+                        </label>
+                        <div class="flex space-x-2">
+                            <input type="tel" id="phone_number" name="phone_number" required
+                                   placeholder="e.g., 0612345678"
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                            <button type="button" id="detect-operator" 
+                                    class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200">
+                                <i class="fas fa-search mr-1"></i>Detect
+                            </button>
+                        </div>
+                        <div id="operator-info" class="mt-2 hidden fade-in">
+                            <span id="operator-badge" class="operator-badge bg-green-100 text-green-800 font-medium"></span>
+                            <span id="operator-text" class="text-sm text-gray-600 ml-2"></span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Supported: Hormuud (061/068/069), Golis (062), Somtel (063)
+                        </p>
+                    </div>
+
+                    <div>
+                        <label for="address" class="block text-sm font-medium text-gray-700 mb-1">
+                            Shipping Address *
+                        </label>
+                        <textarea id="address" name="address" required rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                   placeholder="Enter your complete shipping address"></textarea>
                     </div>
 
-                    <!-- City -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
-                        <select name="city" required 
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                            <option value="">Select your city</option>
-                            <option value="mogadishu">Mogadishu</option>
-                            <option value="hargeisa">Hargeisa</option>
-                            <option value="bosaso">Bosaso</option>
-                            <option value="kismayo">Kismayo</option>
-                            <option value="baidoa">Baidoa</option>
-                            <option value="galkayo">Galkayo</option>
-                            <option value="other">Other</option>
-                        </select>
+                        <label for="city" class="block text-sm font-medium text-gray-700 mb-1">
+                            City *
+                        </label>
+                        <input type="text" id="city" name="city" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                               placeholder="Enter your city">
                     </div>
                 </form>
-            </div>
-        </div>
-
-        <!-- Order Summary -->
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
-                <h2 class="text-xl font-semibold mb-6 border-b pb-4">Order Summary</h2>
-                
-                <!-- Order Items -->
-                <div class="space-y-4 mb-6 max-h-64 overflow-y-auto">
-                    {% for item in cart_items %}
-                    <div class="flex items-center space-x-3 py-2 border-b border-gray-100">
-                        {% if item.image_url %}
-                        <img src="{{ item.image_url }}" alt="{{ item.name }}" 
-                             class="w-12 h-12 object-cover rounded-lg border">
-                        {% else %}
-                        <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-image text-gray-400"></i>
-                        </div>
-                        {% endif %}
-                        <div class="flex-1 min-w-0">
-                            <p class="font-medium text-sm truncate">{{ item.name }}</p>
-                            <p class="text-xs text-gray-500">Qty: {{ item.quantity }}</p>
-                        </div>
-                        <p class="font-semibold text-sm">{{ format_currency(item.price * item.quantity) }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-                
-                <!-- Price Breakdown -->
-                <div class="space-y-3 border-t pt-4">
-                    <div class="flex justify-between text-gray-600">
-                        <span>Subtotal</span>
-                        <span>{{ format_currency(total) }}</span>
-                    </div>
-                    <div class="flex justify-between text-gray-600">
-                        <span>Shipping</span>
-                        <span class="text-green-600 font-semibold">FREE</span>
-                    </div>
-                    <div class="flex justify-between text-gray-600">
-                        <span>Tax</span>
-                        <span>{{ format_currency(total * 0.05) }}</span>
-                    </div>
-                    <div class="flex justify-between text-lg font-bold border-t pt-3">
-                        <span>Total</span>
-                        <span class="text-blue-600">{{ format_currency(total * 1.05) }}</span>
-                    </div>
-                </div>
-
-                <!-- Complete Order Button -->
-                <button onclick="processPayment()" 
-                        class="w-full bg-blue-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 transition font-semibold text-lg mt-6 flex items-center justify-center">
-                    <i class="fas fa-lock mr-3"></i>
-                    Complete Order
-                </button>
-
-                <!-- Security Guarantee -->
-                <div class="mt-4 text-center">
-                    <p class="text-xs text-gray-500 flex items-center justify-center">
-                        <i class="fas fa-shield-alt text-green-500 mr-2"></i>
-                        Your payment is secure and encrypted
-                    </p>
-                </div>
-
-                <!-- Continue Shopping -->
-                <a href="{{ url_for('products') }}" 
-                   class="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition font-medium text-center block mt-4">
-                    Continue Shopping
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-// Show/hide payment method details
-document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-        document.querySelectorAll('.payment-details').forEach(detail => {
-            detail.classList.add('hidden');
-        });
-        
-        if (this.value === 'evc') {
-            document.getElementById('evcDetails').classList.remove('hidden');
-        } else if (this.value === 'zaad') {
-            document.getElementById('zaadDetails').classList.remove('hidden');
-        }
-    });
-});
-
-function processPayment() {
-    const formData = new FormData(document.getElementById('checkoutForm'));
-    
-    // Add payment method to form data
-    const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
-    formData.append('payment_method', paymentMethod);
-    
-    fetch('{{ url_for("process_payment") }}', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification('🎉 Order placed successfully! Redirecting...', 'success');
-            setTimeout(() => {
-                window.location.href = '/order-success/' + data.order_id;
-            }, 2000);
-        } else {
-            showNotification(data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Error processing payment. Please try again.', 'error');
-    });
-}
-
-function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-transform duration-300 ${
-        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-    }`;
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
-</script>
-
-<style>
-.payment-details {
-    transition: all 0.3s ease;
-}
-
-.hidden {
-    display: none;
-}
-
-input:focus, textarea:focus, select:focus {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-}
-</style>
-{% endblock %}
-        <div class="mt-4 flex space-x-4">
-            <a href="{{ url_for('login') }}?next={{ url_for('checkout') }}" 
-               class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-                Login
-            </a>
-            <a href="{{ url_for('signup') }}?next={{ url_for('checkout') }}" 
-               class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition">
-                Sign Up
-            </a>
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Checkout Steps -->
-        <div class="lg:col-span-2">
-            <!-- Step Indicator -->
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold">
-                            1
-                        </div>
-                        <span class="ml-2 font-semibold">Review Order</span>
-                    </div>
-                    <div class="flex-1 h-1 bg-gray-300 mx-4"></div>
-                    <div class="flex items-center">
-                        <div class="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center font-semibold">
-                            2
-                        </div>
-                        <span class="ml-2 text-gray-600">Payment</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Order Review -->
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-xl font-semibold mb-4">Order Review</h2>
-                
-                <div class="space-y-4">
-                    {% for item in cart_items %}
-                    <div class="flex items-center justify-between py-3 border-b border-gray-200">
-                        <div class="flex items-center space-x-4">
-                            {% if item.image_url %}
-                            <img src="{{ item.image_url }}" 
-                                 alt="{{ item.name }}" 
-                                 class="w-16 h-16 object-cover rounded">
-                            {% else %}
-                            <div class="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                                <i class="fas fa-image text-gray-400"></i>
-                            </div>
-                            {% endif %}
-                            <div>
-                                <h3 class="font-semibold">{{ item.name }}</h3>
-                                <p class="text-gray-600 text-sm">Quantity: {{ item.quantity }}</p>
-                            </div>
-                        </div>
-                        <span class="font-semibold">{{ format_currency(item.price * item.quantity) }}</span>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <!-- Order Total -->
-                <div class="mt-6 pt-6 border-t border-gray-200">
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span>Subtotal</span>
-                            <span>{{ format_currency(total) }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Shipping</span>
-                            <span class="text-green-600">Free</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span>Tax (10%)</span>
-                            <span>{{ format_currency(total * 0.1) }}</span>
-                        </div>
-                        <div class="flex justify-between text-lg font-semibold pt-2 border-t">
-                            <span>Total</span>
-                            <span class="text-blue-600">{{ format_currency(total * 1.1) }}</span>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Payment Method -->
             <div class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold mb-4">Payment Method</h2>
-                <p class="text-gray-600 mb-4">We accept mobile money payments for your convenience.</p>
-                
-                <form id="paymentForm" class="space-y-4">
-                    <div>
-                        <label for="phone_number" class="block text-sm font-medium text-gray-700 mb-2">
-                            Your Phone Number *
-                        </label>
-                        <input type="tel" 
-                               id="phone_number" 
-                               name="phone_number"
-                               placeholder="+252 XXX XXX XXX"
-                               required
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <div>
-                        <label for="pin" class="block text-sm font-medium text-gray-700 mb-2">
-                            PIN (Optional - For simulation)
-                        </label>
-                        <input type="password" 
-                               id="pin" 
-                               name="pin"
-                               placeholder="Enter PIN for simulation"
-                               maxlength="4"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <p class="text-sm text-gray-500 mt-1">This is for simulation purposes only.</p>
-                    </div>
-
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div class="flex items-start">
-                            <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
-                            <div>
-                                <h4 class="font-semibold text-blue-800">Payment Instructions</h4>
-                                <p class="text-blue-700 text-sm mt-1">
-                                    After clicking "Complete Payment", we'll simulate a mobile money transaction. 
-                                    You'll receive an order confirmation with a printable receipt.
-                                </p>
+                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-credit-card mr-2 text-purple-600"></i>
+                    Payment Method
+                </h2>
+                <div id="payment-methods" class="space-y-3">
+                    <!-- EVC Plus -->
+                    <div id="evc-payment" class="payment-method hidden fade-in">
+                        <div class="border-2 border-gray-200 rounded-lg p-4 payment-option cursor-pointer hover:border-green-300 transition duration-200 active">
+                            <div class="flex items-center">
+                                <input type="radio" id="evc_plus" name="payment_method" value="EVC Plus" class="hidden" checked>
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-mobile-alt text-purple-600 text-xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <label for="evc_plus" class="font-medium text-gray-800 cursor-pointer block">
+                                        EVC Plus
+                                    </label>
+                                    <p class="text-sm text-gray-600">Hormuud Telecom - 061, 068, 069</p>
+                                </div>
+                                <div class="operator-badge bg-purple-100 text-purple-800 font-semibold">
+                                    Hormuud
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <button type="submit" 
-                            id="payButton"
-                            class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition font-semibold flex items-center justify-center">
-                        <i class="fas fa-mobile-alt mr-3"></i>
-                        Complete Payment - {{ format_currency(total * 1.1) }}
-                    </button>
-                </form>
+                    <!-- Zaad -->
+                    <div id="zaad-payment" class="payment-method hidden fade-in">
+                        <div class="border-2 border-gray-200 rounded-lg p-4 payment-option cursor-pointer hover:border-green-300 transition duration-200">
+                            <div class="flex items-center">
+                                <input type="radio" id="zaad" name="payment_method" value="Zaad" class="hidden">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-wallet text-blue-600 text-xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <label for="zaad" class="font-medium text-gray-800 cursor-pointer block">
+                                        Zaad
+                                    </label>
+                                    <p class="text-sm text-gray-600">Golis Telecom - 062</p>
+                                </div>
+                                <div class="operator-badge bg-blue-100 text-blue-800 font-semibold">
+                                    Golis
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Edahab -->
+                    <div id="edahab-payment" class="payment-method hidden fade-in">
+                        <div class="border-2 border-gray-200 rounded-lg p-4 payment-option cursor-pointer hover:border-green-300 transition duration-200">
+                            <div class="flex items-center">
+                                <input type="radio" id="edahab" name="payment_method" value="Edahab" class="hidden">
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-credit-card text-green-600 text-xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <label for="edahab" class="font-medium text-gray-800 cursor-pointer block">
+                                        Edahab
+                                    </label>
+                                    <p class="text-sm text-gray-600">Somtel Telecom - 063</p>
+                                </div>
+                                <div class="operator-badge bg-green-100 text-green-800 font-semibold">
+                                    Somtel
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- No operator detected -->
+                    <div id="no-operator" class="payment-method">
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                            <i class="fas fa-info-circle text-yellow-500 text-xl mb-2"></i>
+                            <p class="text-yellow-800 font-medium">Enter your phone number to see available payment methods</p>
+                            <p class="text-yellow-600 text-sm mt-1">We'll automatically detect your telecom operator</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Order Summary Sidebar -->
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
-                <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
-                
-                <div class="space-y-3 mb-6">
-                    {% for item in cart_items %}
-                    <div class="flex justify-between text-sm">
-                        <span>{{ item.name }} x{{ item.quantity }}</span>
-                        <span>{{ format_currency(item.price * item.quantity) }}</span>
-                    </div>
-                    {% endfor %}
+            <!-- Payment Instructions -->
+            <div id="payment-instructions" class="bg-blue-50 border border-blue-200 rounded-lg p-4 hidden fade-in">
+                <h4 class="font-medium text-blue-800 mb-2 flex items-center">
+                    <i class="fas fa-info-circle mr-2"></i>Payment Instructions
+                </h4>
+                <div class="text-blue-700 text-sm space-y-1">
+                    <p>✅ <strong>One-click payment:</strong> No need to enter amount or payment method</p>
+                    <p>📱 <strong>Simple process:</strong> Enter PIN when you receive the payment request</p>
+                    <p>⚡ <strong>Instant confirmation:</strong> Get immediate order confirmation</p>
                 </div>
+            </div>
 
-                <div class="border-t pt-4 space-y-2">
-                    <div class="flex justify-between">
-                        <span>Subtotal</span>
-                        <span>{{ format_currency(total) }}</span>
+            <!-- Submit Button -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <button type="button" id="pay-button" 
+                        class="w-full bg-green-600 text-white py-4 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-300 font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 transform hover:scale-[1.02]"
+                        disabled>
+                    <span id="pay-button-text" class="flex items-center justify-center">
+                        <i class="fas fa-lock mr-2"></i>
+                        Pay Now - {{ format_currency(total) }}
+                    </span>
+                    <div id="pay-button-loading" class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                        Processing Payment...
                     </div>
-                    <div class="flex justify-between">
-                        <span>Shipping</span>
-                        <span class="text-green-600">Free</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>Tax</span>
-                        <span>{{ format_currency(total * 0.1) }}</span>
-                    </div>
-                    <div class="flex justify-between font-semibold text-lg border-t pt-2">
-                        <span>Total</span>
-                        <span class="text-blue-600">{{ format_currency(total * 1.1) }}</span>
-                    </div>
-                </div>
-
-                <!-- Security Features -->
-                <div class="mt-6 pt-6 border-t border-gray-200">
-                    <div class="flex items-center justify-center space-x-4 text-gray-500">
-                        <i class="fas fa-lock"></i>
-                        <span class="text-sm">Secure SSL Encryption</span>
-                    </div>
-                </div>
+                </button>
+                <p class="text-xs text-gray-500 text-center mt-3">
+                    🔒 Your payment is secure and encrypted
+                </p>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    .payment-method {
+        transition: all 0.3s ease;
+    }
+    .payment-method.hidden {
+        display: none;
+    }
+    .payment-method.active {
+        border-color: #10B981;
+        background-color: #ECFDF5;
+    }
+    .operator-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+    }
+    .loading-spinner {
+        display: none;
+    }
+    .fade-in {
+        animation: fadeIn 0.5s ease-in;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
 {% block scripts %}
 <script>
-document.getElementById('paymentForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const payButton = document.getElementById('payButton');
-    const originalText = payButton.innerHTML;
-    
-    // Show loading state
-    payButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
-    payButton.disabled = true;
-    
-    const formData = new FormData(this);
-    
-    fetch('{{ url_for("process_payment") }}', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification('Payment successful! Redirecting...', 'success');
-            setTimeout(() => {
-                window.location.href = '{{ url_for("order_success", order_id="") }}' + data.order_id;
-            }, 2000);
-        } else {
-            showNotification(data.message, 'error');
-            payButton.innerHTML = originalText;
-            payButton.disabled = false;
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Payment failed. Please try again.', 'error');
-        payButton.innerHTML = originalText;
-        payButton.disabled = false;
-    });
-});
+    document.addEventListener('DOMContentLoaded', function() {
+        const phoneInput = document.getElementById('phone_number');
+        const detectButton = document.getElementById('detect-operator');
+        const operatorInfo = document.getElementById('operator-info');
+        const operatorBadge = document.getElementById('operator-badge');
+        const operatorText = document.getElementById('operator-text');
+        const paymentMethods = document.getElementById('payment-methods');
+        const paymentInstructions = document.getElementById('payment-instructions');
+        const payButton = document.getElementById('pay-button');
+        const payButtonText = document.getElementById('pay-button-text');
+        const payButtonLoading = document.getElementById('pay-button-loading');
+        const orderTotal = document.getElementById('order-total');
+        const subtotal = document.getElementById('subtotal');
 
-function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-transform duration-300 ${
-        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-    }`;
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.remove();
-    }, 3000);
-}
+        // Format currency
+        function formatCurrency(amount) {
+            return '$' + parseFloat(amount).toFixed(2);
+        }
+
+        // Update order total (for real-time updates if needed)
+        function updateOrderTotal() {
+            const currentTotal = parseFloat('{{ total }}');
+            orderTotal.textContent = formatCurrency(currentTotal);
+            payButtonText.innerHTML = '<i class="fas fa-lock mr-2"></i>Pay Now - ' + formatCurrency(currentTotal);
+        }
+
+        // Detect operator function
+        async function detectOperator() {
+            const phoneNumber = phoneInput.value.trim();
+            
+            if (!phoneNumber) {
+                showAlert('Please enter a phone number', 'error');
+                return;
+            }
+
+            // Basic phone number validation
+            if (phoneNumber.length < 9) {
+                showAlert('Please enter a valid phone number', 'error');
+                return;
+            }
+
+            detectButton.disabled = true;
+            detectButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Detecting...';
+
+            try {
+                const response = await fetch('/api/detect-operator', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ phone_number: phoneNumber })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Show operator info with animation
+                    operatorInfo.classList.remove('hidden');
+                    operatorInfo.classList.add('fade-in');
+                    operatorBadge.textContent = data.operator;
+                    operatorText.textContent = 'Detected: ' + data.payment_method;
+
+                    // Show only the relevant payment method
+                    document.querySelectorAll('.payment-method').forEach(function(method) {
+                        method.classList.add('hidden');
+                    });
+
+                    if (data.payment_method === 'EVC Plus') {
+                        document.getElementById('evc-payment').classList.remove('hidden');
+                        document.getElementById('evc_plus').checked = true;
+                        setActivePayment('evc-payment');
+                    } else if (data.payment_method === 'Zaad') {
+                        document.getElementById('zaad-payment').classList.remove('hidden');
+                        document.getElementById('zaad').checked = true;
+                        setActivePayment('zaad-payment');
+                    } else if (data.payment_method === 'Edahab') {
+                        document.getElementById('edahab-payment').classList.remove('hidden');
+                        document.getElementById('edahab').checked = true;
+                        setActivePayment('edahab-payment');
+                    }
+
+                    // Show payment instructions and enable pay button
+                    paymentInstructions.classList.remove('hidden');
+                    paymentInstructions.classList.add('fade-in');
+                    payButton.disabled = false;
+
+                    showAlert('✅ ' + data.operator + ' detected! ' + data.payment_method + ' payment method selected.', 'success');
+
+                } else {
+                    showAlert(data.message || 'Could not detect operator. Please check your phone number.', 'error');
+                    resetPaymentMethods();
+                }
+
+            } catch (error) {
+                console.error('Error detecting operator:', error);
+                showAlert('Error detecting operator. Please try again.', 'error');
+                resetPaymentMethods();
+            } finally {
+                detectButton.disabled = false;
+                detectButton.innerHTML = '<i class="fas fa-search mr-1"></i>Detect';
+            }
+        }
+
+        // Set active payment method
+        function setActivePayment(paymentId) {
+            document.querySelectorAll('.payment-option').forEach(function(option) {
+                option.classList.remove('active');
+                option.style.borderColor = '';
+                option.style.backgroundColor = '';
+            });
+
+            const activeOption = document.querySelector('#' + paymentId + ' .payment-option');
+            if (activeOption) {
+                activeOption.classList.add('active');
+                activeOption.style.borderColor = '#10B981';
+                activeOption.style.backgroundColor = '#ECFDF5';
+            }
+        }
+
+        // Reset payment methods
+        function resetPaymentMethods() {
+            document.querySelectorAll('.payment-method').forEach(function(method) {
+                method.classList.add('hidden');
+            });
+            document.getElementById('no-operator').classList.remove('hidden');
+            operatorInfo.classList.add('hidden');
+            paymentInstructions.classList.add('hidden');
+            payButton.disabled = true;
+        }
+
+        // Show alert message
+        function showAlert(message, type) {
+            // Remove existing alerts
+            const existingAlert = document.querySelector('.custom-alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+
+            const alert = document.createElement('div');
+            let alertClass = 'custom-alert fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 max-w-sm fade-in ';
+            
+            if (type === 'error') {
+                alertClass += 'bg-red-50 border border-red-200 text-red-800';
+            } else if (type === 'success') {
+                alertClass += 'bg-green-50 border border-green-200 text-green-800';
+            } else {
+                alertClass += 'bg-blue-50 border border-blue-200 text-blue-800';
+            }
+            
+            alert.className = alertClass;
+            
+            let iconClass = 'fas fa-';
+            if (type === 'error') {
+                iconClass += 'exclamation-triangle';
+            } else if (type === 'success') {
+                iconClass += 'check-circle';
+            } else {
+                iconClass += 'info-circle';
+            }
+
+            alert.innerHTML = '<div class="flex items-center"><i class="' + iconClass + ' mr-2"></i><span>' + message + '</span></div>';
+
+            document.body.appendChild(alert);
+
+            // Auto remove after 5 seconds
+            setTimeout(function() {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        // Payment option selection
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.payment-option')) {
+                const paymentOption = e.target.closest('.payment-option');
+                const paymentMethod = paymentOption.querySelector('input[type="radio"]').value;
+                
+                setActivePayment(paymentOption.closest('.payment-method').id);
+                
+                // Check the corresponding radio button
+                const radio = paymentOption.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.checked = true;
+                }
+
+                showAlert('✅ ' + paymentMethod + ' selected for payment', 'success');
+            }
+        });
+
+        // Form submission
+        payButton.addEventListener('click', async function() {
+            const fullName = document.getElementById('full_name').value;
+            const phoneNumber = document.getElementById('phone_number').value;
+            const address = document.getElementById('address').value;
+            const city = document.getElementById('city').value;
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+
+            // Validation
+            if (!fullName || !phoneNumber || !address || !city) {
+                showAlert('Please fill in all required fields', 'error');
+                return;
+            }
+
+            if (!paymentMethod) {
+                showAlert('Please select a payment method', 'error');
+                return;
+            }
+
+            // Show loading state
+            payButton.disabled = true;
+            payButtonText.style.display = 'none';
+            payButtonLoading.style.display = 'flex';
+
+            try {
+                const formData = new FormData();
+                formData.append('full_name', fullName);
+                formData.append('phone_number', phoneNumber);
+                formData.append('address', address);
+                formData.append('city', city);
+                formData.append('payment_method', paymentMethod.value);
+
+                const response = await fetch('/process-payment', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('✅ Payment successful! Redirecting...', 'success');
+                    // Redirect to success page after a short delay
+                    setTimeout(function() {
+                        window.location.href = '/order-success/' + data.order_id;
+                    }, 2000);
+                } else {
+                    showAlert(data.message || 'Payment failed. Please try again.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Payment error:', error);
+                showAlert('Payment failed. Please check your connection and try again.', 'error');
+            } finally {
+                // Reset button state
+                payButton.disabled = false;
+                payButtonText.style.display = 'flex';
+                payButtonLoading.style.display = 'none';
+            }
+        });
+
+        // Event listeners
+        detectButton.addEventListener('click', detectOperator);
+        
+        // Auto-detect when phone input loses focus
+        phoneInput.addEventListener('blur', function() {
+            if (this.value.trim().length >= 9) {
+                detectOperator();
+            }
+        });
+
+        // Enter key detection for phone input
+        phoneInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                detectOperator();
+            }
+        });
+
+        // Initialize
+        updateOrderTotal();
+
+        // Add some sample phone numbers for testing
+        console.log('💡 Test phone numbers:');
+        console.log('Hormuud: 0611234567, 0681234567, 0691234567');
+        console.log('Golis: 0621234567');
+        console.log('Somtel: 0631234567');
+    });
 </script>
 {% endblock %}
